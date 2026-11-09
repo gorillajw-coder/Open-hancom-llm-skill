@@ -1,0 +1,22 @@
+# 발주기관 앞 일반 보고·요청 공문 (공문 틀 official-letter 상속, D12).
+# 수신·제목·본문·세부 항목·붙임은 LLM이 쓰는 서술 슬롯이고, 문서번호·날짜·명의·연락처는 사실 슬롯이다.
+# 발주기관 명칭은 지어내지 않는다(D11): 계약서·이전 공문·사업 기록에서 찾고 없으면 묻는다.
+id = "client-report-letter"
+title = "발주기관 앞 보고·요청 공문"
+version = "1.0.0"
+extends = "official-letter"
+requires_core = "0.4.0"
+template = "templates/official-letter.hwpx"
+template_sha256 = "04634855f75b0d11f8b612c939ed343b50dd1c50e4cd78de3c5d17340701c6ae"
+triggers = ["공문", "발주기관 공문", "발주처 공문", "보고 공문", "요청 공문", "대외 공문", "발주처에 보고", "발주기관에 요청"]
+sources = ["regulations/official-letter-standard.md"]
+
+[[slot]]
+id = "doc_title"
+label = "제목"
+kind = "prose"
+required = true
+guide = "\"○○ 보고\" 또는 \"○○ 요청\"처럼 명사구로 끝낸다. 보고와 요청을 한 제목에 섞지 않는다(\"보고 및 승인 요청\"이면 본문 마지막 문장도 둘 다 쓴다). 사업명은 출처 표기 그대로"
+max_chars = 80
+forbidden = ["의 건의 건"]
+

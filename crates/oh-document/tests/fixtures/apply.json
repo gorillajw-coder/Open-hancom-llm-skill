@@ -1,0 +1,1 @@
+{"revision":"ed7b7f544872d615808273f49e375b14e744a185675c28e756c18ef42764a15b","operations":[{"op":"replace_text","target":"Contents/section0.xml#t4","expected":"테스트","text":"고친 셀 <확인> & 검토"},{"op":"replace_text","target":"Contents/section0.xml#t6","expected":"","text":"빈 칸 채움"}]}

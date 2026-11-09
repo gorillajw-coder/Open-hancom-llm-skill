@@ -1,0 +1,38 @@
+{
+ "border": {
+  "sha256": "77485cbac586bcc7c5a952a84f447e1aeff84a1fda58074968045fa17eb0b83a",
+  "source": "synthetic.hwpx"
+ },
+ "format": {
+  "sha256": "c299c272fe9f908af096137bc221c294c1befd46f8d1d004e44dc64244b80893",
+  "source": "synthetic.hwpx"
+ },
+ "image": {
+  "sha256": "e4d4d88b93b9c915208dac85b65c8ed10b448374cc5f4a80d7b1ffa39f85e50b",
+  "source": "media.hwpx"
+ },
+ "image-insert": {
+  "sha256": "388b406e0114498e5825036c8e7d5c08b4e983b587b3733e0e639c2f90dd907b",
+  "source": "media.hwpx"
+ },
+ "image-replace": {
+  "sha256": "3533bc10a577f010858e6c069a8b5e44fb1eb0e61e9c22f1c2be58c47cdb52c2",
+  "source": "media.hwpx"
+ },
+ "link": {
+  "sha256": "9184bf03e0495c9b99256095696d0e11b3b16c6f6004623a97b2505a610576cd",
+  "source": "media.hwpx"
+ },
+ "paragraph": {
+  "sha256": "5079f1f0ca7ef90db1da3e955ba9ed38effcfebdb7094ac7b05021dff35bed0d",
+  "source": "synthetic.hwpx"
+ },
+ "style": {
+  "sha256": "5c57fa75163e4c861f9ee4917ab5ee6c2a31c1e878b79bb9701fe0b84fa21fc1",
+  "source": "synthetic.hwpx"
+ },
+ "table": {
+  "sha256": "6bfb8c39f7df2a67e62284f62de13e7acca924bd185a53587110dda7dcb7cdf7",
+  "source": "synthetic.hwpx"
+ }
+}

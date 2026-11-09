@@ -1,0 +1,33 @@
+version = "0.7.2-public"
+anonymized = true
+search = "none: substring only"
+
+[[file]]
+path = "frames/official-letter.toml"
+sha256 = "c2855bf18bb9775d957c4043c4469457d43d7f5fb6b85f9b452112cd5bba17f1"
+kind = "frame"
+
+[[file]]
+path = "cards/client-report-letter.toml"
+sha256 = "eb1cd4153259ef142f51be4bef20c9c4c376bcd5a4cf4541004e758f81e3fc35"
+kind = "card"
+
+[[file]]
+path = "templates/official-letter.hwpx"
+sha256 = "04634855f75b0d11f8b612c939ed343b50dd1c50e4cd78de3c5d17340701c6ae"
+kind = "template"
+
+[[file]]
+path = "examples/client-report-letter-example.hwpx"
+sha256 = "2a4e32be0064a0c86ab4998bf4a7a81dd373add0d743f40adbf01924dedfaee4"
+kind = "example"
+
+[[file]]
+path = "regulations/official-letter-standard.md"
+sha256 = "5fb23b47adfdbc136c84c9c2d6181005efd1639ee5c647e9fe72f39f140dbcab"
+kind = "regulation"
+
+[[file]]
+path = "defaults.toml"
+sha256 = "72151ea6d61f066a86967a439db5ac9cf40caed09e4785da7f5c3927d8219247"
+kind = "defaults"

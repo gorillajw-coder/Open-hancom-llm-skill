@@ -1,0 +1,15 @@
+[package]
+name = "oh-mcp"
+version.workspace = true
+edition.workspace = true
+description = "stdio MCP server (hand-written JSON-RPC, no async runtime) exposing only the high-level document tools."
+
+[dependencies]
+oh-document = { path = "../oh-document" }
+oh-host = { path = "../oh-host" }
+oh-library = { path = "../oh-library" }
+oh-recipe = { path = "../oh-recipe" }
+serde_json = { version = "1", features = ["raw_value"] }
+serde = { version = "1", features = ["derive"] }
+roxmltree = "0.20"
+zip = { version = "2.4", default-features = false, features = ["deflate"] }

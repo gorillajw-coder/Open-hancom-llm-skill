@@ -1,0 +1,12 @@
+# 입력값·메모리·참고자료가 모두 없을 때만 쓰는 표시된 자리표시자 (DECISIONS D6-2).
+# 영수증과 리뷰 패킷에 항상 나온다.
+
+[defaults.our_company]
+value = "개좋소"
+
+[defaults.counterparty]
+value = "김밥천국"
+style = { color = "#FF0000" }
+
+[defaults.project_name]
+value = "저녁메뉴 장보기"

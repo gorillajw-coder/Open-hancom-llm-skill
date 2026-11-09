@@ -1,0 +1,7 @@
+{"page": {"width": 59528, "height": 84186, "left": 8504, "right": 8504, "top": 5668, "bottom": 4252},
+ "blocks": [
+  {"type": "paragraph", "align": "CENTER", "runs": [
+    {"text": "합성 보고서", "height": 1600, "bold": true, "color": "#123456"},
+    {"text": " 검토", "height": 1000}]},
+  {"type": "table", "column_widths": [18000, 24520], "row_heights": [2400, 3200],
+   "rows": [[{"text": "항목"}, {"text": "결과"}], [{"text": "테스트"}, {"text": "통과 & <검증>"}]]}]}

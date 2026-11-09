@@ -1,0 +1,496 @@
+{
+ "page": {
+  "width": 59528,
+  "height": 84186,
+  "left": 8504,
+  "right": 8504,
+  "top": 5668,
+  "bottom": 4252
+ },
+ "blocks": [
+  {
+   "type": "table",
+   "column_widths": [
+    7000,
+    35520
+   ],
+   "row_heights": [
+    3200,
+    1800,
+    1800,
+    1800,
+    1800,
+    30000,
+    4000,
+    4200
+   ],
+   "rows": [
+    [
+     {
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "SOLID",
+         "width": "0.4 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "CENTER",
+      "colspan": 2,
+      "blocks": [
+       {
+        "type": "paragraph",
+        "align": "CENTER",
+        "runs": [
+         {
+          "text": "개좋소",
+          "height": 2200,
+          "bold": true
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    [
+     {
+      "runs": [
+       {
+        "text": "수신",
+        "height": 1200,
+        "bold": true
+       }
+      ],
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "CENTER"
+     },
+     {
+      "runs": [
+       {
+        "text": "김밥천국 사장",
+        "height": 1200,
+        "bold": false
+       }
+      ],
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "CENTER"
+     }
+    ],
+    [
+     {
+      "runs": [
+       {
+        "text": "(경유)",
+        "height": 1200,
+        "bold": true
+       }
+      ],
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "CENTER"
+     },
+     {
+      "runs": [
+       {
+        "text": "",
+        "height": 1200,
+        "bold": false
+       }
+      ],
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "CENTER"
+     }
+    ],
+    [
+     {
+      "runs": [
+       {
+        "text": "참조",
+        "height": 1200,
+        "bold": true
+       }
+      ],
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "CENTER"
+     },
+     {
+      "runs": [
+       {
+        "text": "",
+        "height": 1200,
+        "bold": false
+       }
+      ],
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "CENTER"
+     }
+    ],
+    [
+     {
+      "runs": [
+       {
+        "text": "제목",
+        "height": 1200,
+        "bold": true
+       }
+      ],
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "SOLID",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "CENTER"
+     },
+     {
+      "runs": [
+       {
+        "text": "제목을 적는다",
+        "height": 1200,
+        "bold": false
+       }
+      ],
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "SOLID",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "CENTER"
+     }
+    ],
+    [
+     {
+      "runs": [
+       {
+        "text": "1. 본문을 적는다.  끝.",
+        "height": 1200,
+        "bold": false
+       }
+      ],
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "TOP",
+      "colspan": 2
+     }
+    ],
+    [
+     {
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "CENTER",
+      "colspan": 2,
+      "blocks": [
+       {
+        "type": "paragraph",
+        "align": "CENTER",
+        "runs": [
+         {
+          "text": "개좋소 대표이사",
+          "height": 1800,
+          "bold": true
+         }
+        ]
+       }
+      ]
+     }
+    ],
+    [
+     {
+      "appearance": {
+       "borders": {
+        "left": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "right": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        },
+        "top": {
+         "style": "SOLID",
+         "width": "0.4 mm",
+         "color": "#000000"
+        },
+        "bottom": {
+         "style": "NONE",
+         "width": "0.12 mm",
+         "color": "#000000"
+        }
+       }
+      },
+      "vertical_align": "TOP",
+      "colspan": 2,
+      "blocks": [
+       {
+        "type": "paragraph",
+        "runs": [
+         {
+          "text": "시행  000-0000 (2026.01.01.)",
+          "height": 1000,
+          "bold": false
+         }
+        ]
+       },
+       {
+        "type": "paragraph",
+        "runs": [
+         {
+          "text": "태양계 내행성시 금성동",
+          "height": 1000,
+          "bold": false
+         }
+        ]
+       },
+       {
+        "type": "paragraph",
+        "runs": [
+         {
+          "text": "전화 000-0000-0000  이메일 kim@example.com  담당 김철수",
+          "height": 1000,
+          "bold": false
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   ]
+  }
+ ]
+}

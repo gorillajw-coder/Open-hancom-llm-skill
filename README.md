@@ -1,1 +1,45 @@
 # Open-hancom-llm-skill
+
+LLM 클라이언트(Claude Desktop·Claude Code·Codex 등)에게 **한글(HWPX) 결재서류를 만들게 하는 로컬 도구**입니다.
+사용자가 "발주기관에 3월 진도 보고 공문 만들어줘"처럼 자연어로 요청하면, LLM은 계획과 검토만 하고 문서 작성·계산·검증은 Rust 코어가 합니다.
+
+- **LLM이 하지 않는 일**: HWPX/XML 직접 편집, 합계·환산 같은 계산, 표 구조·서식 변경, 검증 통과 선언, 출처 없는 사실 지어내기. 이런 일은 코어와 카드 규칙이 맡습니다.
+- **코어가 하는 일**: 문서 카드(슬롯·계산·룰·위치)에 따라 템플릿을 채우고, 결과와 영수증(무엇이 어디에 들어갔는지, 어떤 룰이 통과·실패했는지)을 남깁니다.
+- **연결 방식**: stdio MCP 서버(`oh mcp`)와 CLI(`oh`). 대상 OS는 Windows이고, Linux에서도 빌드·시험됩니다.
+
+> 상태: 1.0 이전(코어 0.4.0). 이 공개 저장소의 기본 라이브러리에는 **공문 틀(`official-letter`)과 예시 카드 하나**만 들어 있습니다. 회사 양식에서 만든 카드는 공개하지 않습니다. 자기 양식은 개인 라이브러리나 공용 팩으로 추가합니다(`docs/LIBRARY-GUIDE.md`).
+
+## 빌드
+```
+cargo build --release
+cargo test --locked
+```
+Windows 배포용은 `RUSTFLAGS=-C target-feature=+crt-static`을 권장합니다(런타임 DLL 의존 제거).
+
+## 설치와 연결
+```
+oh install --client claude-desktop     # 또는 claude-code, codex, chatgpt-desktop --config <경로>
+oh doctor
+```
+- Claude Desktop은 **트레이까지 완전히 종료한 뒤** 설치합니다. 실행 중이면 앱이 종료하면서 설정을 다시 써서 등록이 사라질 수 있어서 `client_running`으로 거절합니다.
+- `PROMPT.md`가 LLM 진입 지침입니다. `oh_guide` 도구도 같은 내용을 줍니다.
+- 자세한 내용은 `INSTALL.md`를 보세요.
+
+## 라이브러리
+- 라이브러리는 데이터입니다: 카드(`cards/*.toml`), 공통 틀(`frames/`), 템플릿(`templates/*.hwpx`), 규정(`regulations/`), 예시. `manifest.toml`에 모든 파일의 sha256을 적고, 로딩할 때 검사합니다.
+- 층: **개인 라이브러리 > 연결한 공용 팩(폴더·zip) > 기본 라이브러리**. `oh library add/list/remove`로 연결합니다.
+- 카드 작성법은 `docs/LIBRARY-GUIDE.md`에 있습니다.
+
+## 구성
+| 크레이트 | 역할 |
+|---|---|
+| `oh-document` | HWPX 패키지 모델·편집·생성 |
+| `oh-recipe` | 카드 엔진: 슬롯·계산·룰·문서 위치, 영수증 |
+| `oh-library` | 라이브러리 로딩·해시 검사·층 소켓·zip 팩 |
+| `oh-host` | 파일시스템 계층 |
+| `oh-mcp` | stdio MCP 서버 |
+| `oh-cli` | `oh` 바이너리 |
+
+## 라이선스
+Apache License 2.0(`LICENSE`). 고지는 `NOTICE`, 의존 크레이트 목록은 `THIRD-PARTY-NOTICES`에 있습니다. `vendor/zune-jpeg`는 원 라이선스를 그대로 따릅니다.
+"한글"과 HWPX는 한글과컴퓨터의 제품·형식입니다. 이 프로젝트는 한글과컴퓨터와 관련이 없습니다.

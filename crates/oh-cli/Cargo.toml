@@ -1,0 +1,22 @@
+[package]
+name = "oh-cli"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "oh"
+path = "src/main.rs"
+
+[dependencies]
+oh-document = { path = "../oh-document" }
+oh-host = { path = "../oh-host" }
+oh-library = { path = "../oh-library" }
+oh-mcp = { path = "../oh-mcp" }
+oh-recipe = { path = "../oh-recipe" }
+serde_json = "1"
+toml_edit = { version = "0.22", default-features = false, features = ["parse", "display"] }
+
+[dev-dependencies]
+serde_json = "1"
+sha2 = "0.10"
+zip = { version = "2.4", default-features = false, features = ["deflate"] }

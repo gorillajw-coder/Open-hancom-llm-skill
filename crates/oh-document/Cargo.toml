@@ -1,0 +1,21 @@
+[package]
+name = "oh-document"
+version.workspace = true
+edition.workspace = true
+description = "Pure HWPX byte processing: no filesystem, process, env, clock or tempfile access."
+
+[dependencies]
+roxmltree = "0.20"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+zip = { version = "2.4", default-features = false, features = ["deflate"] }
+
+png = "0.17"
+zune-jpeg = { version = "=0.5.15", default-features = false, features = ["std"] }
+zune-core = "=0.5.3"
+url = "2"
+
+[dev-dependencies]
+sha2 = "0.10"
+zip = { version = "2.4", default-features = false, features = ["deflate"] }
