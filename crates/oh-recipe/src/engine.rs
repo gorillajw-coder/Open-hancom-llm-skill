@@ -646,7 +646,18 @@ impl Engine {
         for (i, dp) in plan.documents.iter().enumerate() {
             let ev = evals[i].take().expect("ok plan has eval");
             let bc = &self.cards[&dp.card];
+            // a card that types "1. " right before a slot whose value starts with its own number
+            // ("1. {related}" + "1. 우리 …") doubles it; checked before rendering, from the card itself
+            if let Some(d) = value_numbered(bc, &ev) {
+                return Err(Error::new("numbering_doubled", format!("{}: {d}", bc.card.id)));
+            }
             let bytes = self.render(bc, &ev)?;
+            // a number Hancom adds by itself plus a typed one shows as "1. 1." (generic check)
+            let found = crate::numbering::doubled_numbering(&bytes);
+            let (block, ambiguous): (Vec<_>, Vec<_>) = found.into_iter().partition(|i| i.blocking);
+            if !block.is_empty() {
+                return Err(Error::new("numbering_doubled", format!("{}: {}", bc.card.id, crate::numbering::describe(&block))));
+            }
             if bc.card.xlsx.is_some() && bc.xlsx_template.is_none() {
                 return Err(Error::new("xlsx_template_missing", bc.card.id.clone()));
             }
@@ -656,7 +667,12 @@ impl Engine {
             let regress: Vec<String> = now.iter().filter(|(k, n)| **n > bc.baseline_diagnostics.get(*k).copied().unwrap_or(0)).map(|(k, _)| k.clone()).collect();
             let text: Vec<String> = pkg.inspection.text_nodes.iter().filter(|n| !n.text.trim().is_empty()).map(|n| n.text.clone()).collect();
             let overrides = dp.overrides.clone();
-            let mut doc = DraftDoc { card: bc.card.id.clone(), title: bc.card.title.clone(), card_version: bc.card.version.clone(), bytes, xlsx, report: ev.report, overrides, text, receipt: None };
+            let mut report = ev.report;
+            // same number twice in date range ("1. 1."): a doubled number or a date; the LLM asks
+            for it in &ambiguous {
+                report.warnings.push(Issue { code: "numbering_ambiguous".into(), doc: i, id: None, detail: crate::numbering::describe(std::slice::from_ref(it)) });
+            }
+            let mut doc = DraftDoc { card: bc.card.id.clone(), title: bc.card.title.clone(), card_version: bc.card.version.clone(), bytes, xlsx, report, overrides, text, receipt: None };
             doc.receipt = Some(DocReceipt {
                 template_sha256: bc.card.template_sha256.clone(),
                 bytes_sha256: hex_sha256(&doc.bytes),
@@ -1119,4 +1135,47 @@ pub fn finalize(draft: &Draft, index: usize) -> Result<Finalized> {
         receipt["xlsx_sha256"] = json!(x);
     }
     Ok(Finalized { bytes: d.bytes.clone(), xlsx: d.xlsx.clone(), receipt })
+}
+
+/// Slot values that start with a list marker where the card's fmt already typed one right before
+/// the slot ("1. {related}" with related = "1. 우리 …"). Filters that renumber lines (num, ganada,
+/// attach, nobullet) strip markers themselves and are skipped.
+fn value_numbered(bc: &BoundCard, ev: &Eval) -> Option<String> {
+    let fmts = bc.card.targets.iter().map(|t| t.fmt.as_str()).chain(bc.card.cells.iter().map(|c| c.fmt.as_str()));
+    for f in fmts {
+        let mut rest = f;
+        while let Some(open) = rest.find('{') {
+            let before = &rest[..open];
+            let line = before.rsplit('\n').next().unwrap_or(before).trim_start_matches('[');
+            let Some(close) = rest[open..].find('}') else { break };
+            let inner = &rest[open + 1..open + close];
+            let (slot, filter) = inner.split_once('|').map(|(a, b)| (a, Some(b))).unwrap_or((inner, None));
+            let renumbers = filter.is_some_and(|x| ["num", "ganada", "attach", "nobullet"].contains(&x));
+            // an optional "[…]" group is written only when all its slots resolve
+            let group_open = before.rfind('[').is_some_and(|o| !before[o..].contains(']'));
+            let group_ok = !group_open || {
+                let end = rest[open..].find(']').map(|e| open + e).unwrap_or(rest.len());
+                rest[before.rfind('[').unwrap_or(0)..end]
+                    .split('{')
+                    .skip(1)
+                    .filter_map(|x| x.split('}').next())
+                    .all(|x| ev.resolved.contains_key(x.split('|').next().unwrap_or("").trim()))
+            };
+            if group_ok && !line.is_empty() && !renumbers && crate::numbering::typed_marker_len(line) == Some(line.len()) {
+                if let Some(v) = ev.resolved.get(slot.trim()) {
+                    // a value that is itself a date ("3. 2. 회의") is not a number
+                    if crate::numbering::typed_marker_len(&v.value).is_some() && !crate::numbering::starts_with_date(&v.value) {
+                        return Some(format!(
+                            "카드가 \"{}\" 뒤에 쓰는 {} 값이 번호로 시작한다(\"{}\"). 값에서 앞 번호를 뺀다",
+                            line.trim(),
+                            slot.trim(),
+                            v.value.chars().take(20).collect::<String>()
+                        ));
+                    }
+                }
+            }
+            rest = &rest[open + close + 1..];
+        }
+    }
+    None
 }

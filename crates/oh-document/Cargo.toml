@@ -2,6 +2,7 @@
 name = "oh-document"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 description = "Pure HWPX byte processing: no filesystem, process, env, clock or tempfile access."
 
 [dependencies]

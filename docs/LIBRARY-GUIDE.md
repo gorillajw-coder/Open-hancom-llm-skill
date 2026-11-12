@@ -23,7 +23,7 @@
 ## 2. 소켓: 라이브러리를 어디에 꽂나
 | 층 | 위치 | 누가 만드나 | 우선순위 |
 |---|---|---|---|
-| 개인 | `<설치 폴더>/personal-library/` | 본인(등록 흐름, 지금은 손으로) | 1 (가장 높음) |
+| 개인 | `<설치 폴더>/personal-library/` | 본인(등록 흐름 5절, 또는 손으로) | 1 (가장 높음) |
 | 공용 팩 | 사용자가 연결한 폴더나 zip (`<설치 폴더>/sockets.toml`에 기록) | 팀·회사 | 2 (먼저 연결한 팩이 앞, 새로 연결한 팩은 팩 중 가장 낮다) |
 | 기본 | 설치할 때 같이 오는 `<설치 폴더>/library/` | 배포자 | 3 |
 
@@ -56,7 +56,7 @@
 - **규정 문서(.md)**: 카드·틀·규정표(.toml)와 달리 `regulations/*.md`는 id로 가려지지 않는다. 층마다 검색 결과에 같이 나온다. 카드의 `sources`가 가리키는 것은 그 카드가 속한 층의 파일이다.
 
 ## 3. 새 문서 유형 만들기 (손으로 할 때)
-등록 흐름(5절)이 생기면 2~5단계 대부분을 코어와 LLM이 대신한다. 지금은 손으로 한다.
+등록 흐름(5절)을 쓰면 2~5단계와 8단계 대부분을 코어와 LLM이 대신한다(개인 카드). 공용 팩 카드나 등록 흐름 밖의 기능(xlsx 출력·첨부 읽기)은 손으로 한다.
 
 1. **양식 준비.** HWPX로 저장한다. HWP만 있으면 한글에서 "다른 이름으로 저장 → HWPX"로 바꾼다. 값이 들어간 완성본 1부와 빈 양식 1부가 있으면 가장 좋다.
 2. **구조 확인.** `oh inspect <양식.hwpx>`로 문단·표·셀 구조를 본다. 바꿀 자리마다 근처의 **고정 라벨 글자**를 찾는다(예: "작성일 : ", "제목", "(1) 계약명: "). 같은 양식이라도 표 열 수와 본문 방식이 판본마다 다를 수 있다. 그래서 위치는 좌표보다 라벨로 잡는다.
@@ -124,13 +124,34 @@ anchor = [{ after = "제목", n = 1 }]
 - HWPX 안의 `Preview/PrvText.txt`, `Preview/PrvImage.png`, 작성자 메타, 내장 이미지에도 원문이 남는다. 이것들도 정리한 뒤 잔존 스캔을 한다. 스캔은 고유명, 금액 원문, 계좌 패턴을 모든 ZIP 멤버에서 찾는다.
 - manifest에 `anonymized = true`는 스캔 결과가 0일 때만 적는다.
 
-## 5. 등록 흐름 **[예정]** (D10)
-사용자가 양식을 주면 다음 순서로 카드가 만들어진다.
-1. 코어가 구조를 뽑는다. 칸·표 좌표, 라벨-값 쌍, 숫자·날짜 패턴, 합계 행 후보가 대상이다.
-2. LLM이 카드 초안을 쓴다. 슬롯 후보, 서술 지침, 계산식 후보, 룰 후보다.
-3. 코어가 앵커가 하나씩만 걸리는지 확인한다. 계산식을 원본 숫자에 대입해 맞는지 본다. 왕복 시험(원본 값으로 다시 만들면 원본과 같은지)과 익명화를 한다.
-4. 사용자가 슬롯 목록, 모호한 해석, 룰 심각도, 저장 위치를 확인한다.
-5. `commit`하면 개인 라이브러리에 저장된다. 덮어쓰기는 이 절차로만 한다 (D4-7).
+## 5. 등록 흐름 **[현재, 코어 0.5.0]** (D10, D14)
+값이 들어간 내 양식(HWPX) 하나를 개인 카드로 만든다. LLM(Claude 등)이 MCP 도구로 진행하고, 사용자는 확인만 한다. 카드는 개인 라이브러리(`<설치 폴더>/personal-library/`)에만 저장되고 익명화하지 않는다(D12). 공용 팩으로 나눠 줄 카드는 4절대로 익명화해서 손으로 만든다.
+
+1. **구조 추출** `oh_library_register { template }`: 작업 폴더 `inbox`의 HWPX(또는 절대 경로). HWP는 받지 않는다(한글에서 HWPX로 저장). 코어가 낡은 줄 배치 캐시를 지우고(한컴 2022가 여는 형태, 글자는 그대로), 다음을 돌려준다.
+   - `text_nodes`: [번호, 글자, 표 안 여부]. 번호는 코어 번호라 `after` 앵커의 `n`을 셀 수 있다.
+   - `label_lines`: "라벨 : 값" 줄과 `starts` 앵커 후보, 유일 여부. `label_cells`: 라벨 칸과 오른쪽·아래 칸 글자, 유일 여부. `tables`: 표마다 [행, 열, 글자, 병합].
+   - `numbers`: 금액·비율·날짜·숫자 후보(정규화 값). `total_rows`: 첫 칸이 합계·소계·계인 행. `frame_hint`: 품의서 머리 표면 `approval-memo`, 공문이면 `official-letter`.
+   - `auto_numbered`: 한컴이 번호(NUMBER)·글머리(BULLET)를 스스로 붙이는 문단(글자·종류·번호 모양). `numbering_doubled`: 원본에 이미 번호가 두 번 있는 문단.
+2. **카드 초안**: LLM이 3절 형식의 TOML을 쓴다. `template`·`template_sha256`은 쓰지 않는다(코어가 사용자 파일로 넣는다). 등록 흐름은 HWPX 카드만 만든다(`[xlsx]`·`[[extract]]` 불가). 원본에서 계산된 숫자는 슬롯이 아니라 `[[calc]]`로 둔다.
+3. **코어 검증** `oh_library_register { registration_id, card, sample, expect }`:
+   - `sample`은 원본에 적힌 값 그대로의 plan 슬롯, `expect`는 계산 id별 원본 숫자.
+   - 카드 해석·틀 상속·앵커(각 `starts`·`after`·라벨 칸이 정확히 한 곳)·참조·필터를 확인한다. 모르는 계산 함수는 `unknown_function`으로 멈춘다(6절).
+   - 계산 검산: `expect`의 원본 숫자와 코어 계산값을 비교한다(`calc_checks`).
+   - **번호 규칙**: 자동 번호 문단(`auto_numbered`)의 fmt·값에는 번호를 글자로 넣지 않는다. 같은 문단에 번호가 확실히 두 번 나오면(자동 번호 + 글자 번호, "1. 가.", 카드 fmt의 "1. " 뒤 값이 다시 번호로 시작) 작성이 `numbering_doubled`로 실패한다. 같은 숫자 두 번("1. 1.")은 날짜일 수 있어 막지 않고 경고(`numbering_ambiguous`)만 하며, 서로 다른 날짜 범위 숫자("3. 2.(월)")는 날짜로 보고 통과시키되, 자동 번호 문단이 그렇게 시작하면 번호 중복("1. 1. 2. 항목")일 수도 있어 경고(`numbering_ambiguous`, reason `auto_date`)한다. 이 검사는 등록 검증뿐 아니라 모든 카드의 작성(LLM 값 포함)에 걸린다. 원본에 이미 두 번 있으면 그 문단을 `keep_prefix = false`로 다시 쓰면서 글자 번호를 뺀다. 여러 줄 번호는 번호 없는 문단에서만 `num`·`ganada` 필터로 매긴다.
+   - 왕복 시험: `sample`로 카드를 실제로 작성해 모든 문단을 원본과 비교한다(`roundtrip.differences`). 날짜·금액 형식, 빠진 앵커, 틀린 계산이 여기서 드러난다. 구조 회귀(`regressions_vs_template`)도 본다.
+   - 고정 숫자 `fixed_numbers`: 모든 값을 바꿔 다시 작성해도 그대로인 원본 문단 중 금액·비율이 있는 것. 카드가 쓰지 않는 숫자다(판정에는 안 들어가고 사용자 확인용).
+   - D4-2 점검: 어떤 fmt·계산·룰도 쓰지 않는 계산(`calc_not_written`), 원본에서 계산값이 있는 자리를 하나도 쓰지 않음(`expected_value_stays_fixed`), 원본 값이 다른 금액 슬롯들의 합이거나 이름이 합계인 금액 슬롯(`slot_looks_computed`)은 결정 사항으로 올린다.
+   - 판정 `status`: `ready` / `needs_user_decision`(위 결정 사항, 왕복 차이·계산 불일치·원본에서 실패하는 룰. 대개 카드를 고치고, 원본 쪽 오류면 사용자가 받아들일 수 있다) / `needs_fix`(카드·sample 오류). 시도마다 카드와 결과가 작업 폴더 `work/reg-…/`에 남는다.
+4. **사용자 확인**: LLM이 `summary_for_user`(이름·트리거·슬롯·계산·룰·쓰는 자리)와 저장 위치를 보여 주고 확인을 받는다. 같은 id 카드가 있으면(`existing_card`, 개인·팩·기본 어느 층이든) 바꿀지 묻는다.
+5. **저장** `oh_library_commit { registration_id, user_confirmed: true [, accept_differences, replace] }`:
+   - 마지막 검증이 `ready`이거나, `needs_user_decision`을 사용자가 받아들인 경우(`accept_differences`)만 저장한다. `needs_fix`는 거절한다.
+   - `personal-library/cards/<id>.toml`·`templates/<id>.hwpx`를 쓰고 manifest를 해시와 함께 다시 쓴다. 기존 개인 manifest가 맞지 않으면 아무것도 고치지 않고 `personal_library_invalid`.
+   - 같은 id 교체는 `replace`가 있어야 하고, 이전 파일은 `personal-library/backup/<시각>/`에 남는다. 덮어쓰기는 이 절차로만 한다(D4-7). id는 저장하는 순간 디스크의 층을 다시 읽어 확인한다(검증 뒤 다른 등록·다른 서버 프로세스가 같은 id를 저장한 경우도 `card_exists`).
+   - 쓰기 도중 실패하면 바꾼 파일을 백업에서 되돌리고 새 파일과 manifest를 이전 상태로 돌린다(이번 저장이 개인 폴더를 만들었으면 폴더를 지운다).
+   - 저장 뒤 전체 층을 다시 읽어 개인 층이 `loaded`이고 그 카드를 개인 층이 공급하는지 확인한다. 실패하면 이전 manifest로 되돌린다(`commit_verification_failed`).
+   - 실행 중인 MCP 서버는 바로 새 카드를 쓴다. 다른 클라이언트·서버 프로세스는 다시 시작해야 읽는다.
+
+손으로 만든 카드도 개인 라이브러리에 넣을 수 있다. 그때는 manifest의 해시를 직접 맞춘다(7절 체크리스트).
 
 ## 6. 코어 코드를 고쳐야 하는 경우
 데이터만으로 안 되는 경우는 다음과 같다.
@@ -184,7 +205,9 @@ anchor = [{ after = "제목", n = 1 }]
   - 읽기 `[[extract]]`: from(file 슬롯), sheet, section, label_col, total_col, total_marker, value_col. 항목 합을 쓰고 시트 소계와 다르면 경고.
   - 쓰기 `[xlsx]` template·template_sha256·sheet + `[[xlsx.cell]]` at, fmt, number. 템플릿에 있는 칸에만 쓴다. 수식은 보존하고 캐시값을 코어 값으로, 열 때 재계산.
 - **규정표** [현재]: 라이브러리 `regulations/<id>.toml`(manifest kind `regulation_table`, status sample). 작업 폴더 `regulations/<id>.toml`(status company)이 있으면 대체, 잘못되면 무시하고 노트.
-- **공통 틀** [현재, 0.3.0]: `frames/<id>.toml`(manifest kind `frame`)에 slot·calc·target·cell·rule·`[project]`를 둔다. 템플릿은 없다. 카드 `extends = "<id>"`로 상속하면 틀 항목이 앞에, 카드 항목이 뒤에 붙고, 같은 id는 카드 것이 이긴다. `omit = ["id", ...]`로 틀 항목을 뺀다(틀에 없는 id면 거부). 기본 틀 `approval-memo`: 작성일·작성 부서·작성자(직위)·문서번호·사업명(+사업코드)·시행일·제목·우리 회사, 시행일<작성일 경고. 유형 카드는 본문·표·계산·룰만 쓴다.
+- 아래 틀·카드 이름(`approval-memo`, `general-approval` 등)은 기본(회사 내부) 라이브러리에 있는 것이다. 공개 라이브러리에는 `official-letter` 틀과 `client-report-letter` 카드만 있다.
+- **공통 틀** [현재, 0.3.0]: `frames/<id>.toml`(manifest kind `frame`)에 slot·calc·target·cell·rule·`[project]`를 둔다. 템플릿은 없다. 카드 `extends = "<id>"`로 상속하면 틀 항목이 앞에, 카드 항목이 뒤에 붙고, 같은 id는 카드 것이 이긴다. `omit = ["id", ...]`로 틀 항목을 뺀다(틀에 없는 id면 거부). 기본 틀 `approval-memo`: 작성일·작성 부서·작성자(직위)·문서번호·사업명(+사업코드)·시행일·제목·우리 회사, 시행일<작성일 경고. 유형 카드는 본문·표·계산·룰만 쓴다. 범용 카드 `general-approval`(0.8.0 라이브러리): 이 틀 + 본문 1. 관련 → 2. 요청 취지 → 아래 → 가. 나. 항목(`items|ganada`) → 끝 → 첨부. 전용 카드가 없는 품의용이고 계산은 하지 않는다.
 - **공문 틀** [현재, 0.4.0]: `frames/official-letter.toml`. 결재표 없음. 슬롯: 시행 날짜(필수)·문서번호(없으면 경고)·수신·경유·참조·제목·본문(`body`, 줄마다 1.)·세부(`items`, 줄마다 가.)·붙임(`attachments`)·발신 기관(우리 회사)·명의 직위(기본 "대표이사", 표시된 기본값)·주소·전화·이메일·담당자. 본문 칸 fmt는 `{body|num}[\n{items|ganada}][\n\n붙임  {attachments|attach}]  끝.`이라 "끝."이 마지막 줄 뒤 두 칸에 붙는다. 머리(수신·(경유)·참조·제목)는 라벨 셀, 기관명·본문·명의·시행 칸은 기본 템플릿 좌표(표 0의 0·5·6·7행)다. 다른 공문 양식이면 같은 id의 `[[cell]]`을 카드에서 다시 선언한다. 예시 카드 `client-report-letter`(발주기관 앞 보고·요청). 템플릿은 `scripts/official-letter-spec.json`을 `oh create`로 만든 익명 양식이다.
 - **필요 코어** [현재, 0.3.0]: `requires_core = "x.y.z"`. 코어가 낮으면 `core_too_old`로 카드를 거부한다.
+- **범용 카드** [현재, 0.5.0]: `fallback = true`. MCP 검색은 요청이 이름을 대는 카드(트리거가 통째로 들어 있거나 "품의·서류·요청" 같은 일반어가 아닌 낱말이 겹침) → 범용 카드 → 일반어로만 겹치는 카드 순으로 보여 주고, 범용 카드에는 `"fallback": true`가 붙는다. 모든 요청에 걸리는 트리거("품의"·"기안"·"결재 요청")는 범용 카드에도 넣지 않는다.
 - **사업 기록** [현재, 0.3.0, D11]: 카드(또는 틀) `[project] map = { 슬롯 = "사실키" }`. plan 최상위 `"project": "사업 키"`가 있으면 호스트가 작업 폴더 `projects/<키>.json`을 읽고, 코어가 빈 슬롯을 `memory:<키>.<사실> ← 원출처`로 채운다(명시값 > carry > memory > 기본값). 명시값이 기록과 다르면 `project_fact_mismatch` 경고. 확정 때 provided 값만 기록에 저장한다(기본값·memory 값은 저장 안 함). 발주기관·부서에는 기본값을 두지 않는다.

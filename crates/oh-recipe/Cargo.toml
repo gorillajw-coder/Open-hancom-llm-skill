@@ -2,6 +2,7 @@
 name = "oh-recipe"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 description = "Document card engine: pure bytes in/out. No filesystem, process, env or clock access."
 
 [dependencies]

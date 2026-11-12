@@ -2,6 +2,7 @@
 name = "oh-host"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 description = "OS layer: bounded reads and atomic no-clobber publication (Linux, Windows)."
 
 [dependencies]

@@ -3,6 +3,7 @@
 //! Only the high-level document tools exist (DESIGN §3). Cases and drafts live in this
 //! process's memory; clients only ever see ids. A bad request, an oversized line or even a
 //! handler panic produces an error response and the loop continues.
+mod register;
 mod tools;
 mod xlsx;
 

@@ -1,5 +1,6 @@
-//! The eleven MCP tools. Nothing here edits XML/ZIP, tables or styles, and nothing sends,
+//! The twelve MCP tools. Nothing here edits XML/ZIP, tables or styles, and nothing sends,
 //! signs or approves anything (D4). Output goes to `outbox` with no-clobber only.
+use crate::register::{self, Registration};
 use crate::{xlsx, Config, Server, PROMPT};
 use oh_library::Stack;
 use oh_recipe::{finalize, hex_sha256, slim_defaults, slim_rules, Draft, Engine, Fact, Patch, Plan};
@@ -8,9 +9,10 @@ use serde_json::{json, Map, Value};
 use std::collections::BTreeMap;
 use std::path::{Component, Path, PathBuf};
 
-const NAMES: [&str; 13] = [
+// `oh_calibrate` (DESIGN P6 calibration set) is not part of the 1.0 surface (D14).
+const NAMES: [&str; 12] = [
     "oh_guide", "oh_library_search", "oh_card_get", "oh_case_open", "oh_plan_check", "oh_draft",
-    "oh_revise", "oh_finalize", "oh_project_get", "oh_project_save", "oh_library_register", "oh_library_commit", "oh_calibrate",
+    "oh_revise", "oh_finalize", "oh_project_get", "oh_project_save", "oh_library_register", "oh_library_commit",
 ];
 pub fn tool_names() -> &'static [&'static str] {
     &NAMES
@@ -63,7 +65,17 @@ fn ko(code: &str) -> &'static str {
         "document_index_required" => "문서가 둘 이상이다. document 번호를 지정한다",
         "unsupported_attachment_path" => "첨부는 inbox 안의 상대 경로이거나 절대 경로여야 한다",
         "invalid_xlsx" | "invalid_attachment" => "첨부 문서를 해석하지 못했다",
-        "not_implemented_yet" => "아직 구현되지 않았다(P5 예정). 라이브러리 변경은 사용자와 개발자가 수동으로 한다",
+        "unknown_registration" => "알 수 없는 registration id. oh_library_register에 template부터 준다",
+        "unsupported_template" => "등록할 양식은 HWPX만 받는다. HWP는 한글에서 다른 이름으로 저장 → HWPX로 바꾼다",
+        "invalid_template" => "양식 HWPX를 해석하지 못했다",
+        "not_validated" => "아직 검증한 카드 초안이 없다. oh_library_register에 registration_id·card·sample을 준다",
+        "registration_not_ready" => "마지막 검증이 needs_fix다. 문제를 고친 초안으로 다시 검증한다",
+        "user_confirmation_required" => "사용자가 카드 요약과 저장 위치를 확인한 뒤에만 저장한다(user_confirmed=true)",
+        "decision_required" => "검증에 사용자 결정이 필요한 차이가 있다. 사용자가 받아들였으면 accept_differences=true",
+        "card_exists" => "같은 id 카드가 이미 있다. 사용자가 바꾸기로 했으면 replace=true(개인 카드는 백업 후 교체)",
+        "personal_library_invalid" => "개인 라이브러리 manifest가 맞지 않아 고치지 않았다. oh doctor로 점검한다",
+        "personal_library_write_failed" => "개인 라이브러리(설치 폴더의 personal-library)에 쓰지 못해 이전 상태로 되돌렸다. 폴더 권한·백신·동기화 프로그램이 파일을 잡고 있는지 확인한다",
+        "commit_verification_failed" => "저장 뒤 다시 읽기 검사에 실패해 이전 상태로 되돌렸다",
         "plan_invalid" => "plan에 오류가 있어 작성하지 못했다. oh_plan_check 결과를 보고 고친다",
         "stale_draft" => "draft 개정 번호가 낡았다. 최신 revision으로 patch한다",
         "missing_receipt" | "receipt_mismatch" | "structure_regression" => "코어 영수증 검사에 실패했다",
@@ -175,6 +187,7 @@ pub struct State {
     loaded: Result<Loaded, String>,
     cases: BTreeMap<String, CaseEntry>,
     drafts: BTreeMap<String, DraftEntry>,
+    registrations: BTreeMap<String, Registration>,
     counter: u64,
 }
 
@@ -188,7 +201,7 @@ impl State {
                     .map(|(engine, regulations)| Loaded { stack, engine, regulations })
                     .map_err(|e| e.to_string())
             });
-        State { loaded, cases: BTreeMap::new(), drafts: BTreeMap::new(), counter: 0 }
+        State { loaded, cases: BTreeMap::new(), drafts: BTreeMap::new(), registrations: BTreeMap::new(), counter: 0 }
     }
 }
 
@@ -427,16 +440,39 @@ impl Server {
                 let l = self.loaded()?;
                 let mut hits: Vec<Value> = Vec::new();
                 if kind.is_none() || kind == Some("card") {
-                    let mut seen = Vec::new();
                     let mut qs = vec![q.clone()];
                     qs.extend(q.split_whitespace().map(str::to_string));
-                    for s in qs {
+                    // order: strong specific, strong fallback, weak specific, weak fallback (each in
+                    // discovery order: whole query first, then each word). Weak = the card shares only a
+                    // generic document word (품의·서류·요청 …) with the request. So a generic card never
+                    // goes before a card the request names (해외출장, 하도급, 보험료 …), and a generic
+                    // request is not buried under cards that only share the word 품의.
+                    const GENERIC_WORDS: [&str; 16] = ["품의", "품의서", "서류", "문서", "요청", "신청", "신청서", "결재", "작성", "기안", "건", "관련", "만들어줘", "써줘", "해줘", "올려줘"];
+                    // every phase first; a card is strong if any phase matched it strongly (word order
+                    // must not matter), then ordered by bucket and first discovery
+                    let mut found: Vec<(Value, bool, bool)> = Vec::new(); // (hit, fallback, strong)
+                    for (phase, s) in qs.into_iter().enumerate() {
+                        let generic_word = phase > 0 && (GENERIC_WORDS.contains(&s.as_str()) || s.chars().count() < 2);
                         for h in l.stack.search(&s).map_err(|e| err("library_unavailable", e.to_string()))? {
-                            if !seen.contains(&h.id) {
-                                seen.push(h.id.clone());
-                                hits.push(json!({"kind": "card", "id": h.id, "title": h.title, "layer": h.layer}));
+                            let strong = h.strong || !generic_word;
+                            match found.iter_mut().find(|(v, _, _)| v["id"] == json!(h.id)) {
+                                Some(f) => f.2 |= strong,
+                                None => {
+                                    let mut v = json!({"kind": "card", "id": h.id, "title": h.title, "layer": h.layer});
+                                    if h.fallback {
+                                        v["fallback"] = json!(true);
+                                    }
+                                    found.push((v, h.fallback, strong));
+                                }
                             }
                         }
+                    }
+                    let mut buckets: [Vec<Value>; 4] = Default::default();
+                    for (v, fallback, strong) in found {
+                        buckets[(!strong as usize) * 2 + fallback as usize].push(v);
+                    }
+                    for b in buckets {
+                        hits.extend(b);
                     }
                 }
                 if kind != Some("card") {
@@ -690,12 +726,148 @@ impl Server {
                 let changed = self.save_facts(&key, &facts)?;
                 Ok(json!({"project": key, "changed": changed, "path": self.project_path(&key)?}))
             }
-            "oh_library_register" | "oh_library_commit" | "oh_calibrate" => {
-                Err(ToolErr { code: "not_implemented_yet".into(), detail: Some(name.into()), extra: None })
-            }
+            "oh_library_register" => self.register(a),
+            "oh_library_commit" => self.commit(a),
             _ => Err(err("forbidden_operation", name)),
         }
     }
+}
+
+impl Server {
+    fn install_root(&self) -> PathBuf {
+        self.cfg.library.parent().map(Path::to_path_buf).unwrap_or_default()
+    }
+    /// D10 step 1 (template) or step 3 (registration_id + card draft + sample).
+    fn register(&mut self, a: &Map<String, Value>) -> Result<Value, ToolErr> {
+        only(a, &["template", "registration_id", "card", "sample", "expect"])?;
+        self.loaded()?;
+        let personal = self.install_root().join(oh_library::PERSONAL_DIR);
+        match (a.contains_key("template"), a.contains_key("registration_id")) {
+            (true, false) => {
+                if ["card", "sample", "expect"].iter().any(|k| a.contains_key(*k)) {
+                    return Err(err("invalid_arguments", "첫 호출은 template만 준다"));
+                }
+                let name = req_str(a, "template", 500)?;
+                if self.state.registrations.len() >= MAX_OPEN {
+                    return Err(err("too_many_open", ""));
+                }
+                let inbox = self.dir("inbox")?;
+                let path = resolve_attachment(&inbox, name)?;
+                if !path.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("hwpx")) {
+                    return Err(err("unsupported_template", name));
+                }
+                let raw = oh_host::bounded_read(&path, oh_document::MAX_INPUT).map_err(|c| err(c, name))?;
+                let (tpl, cleanup) = register::prepare(raw).map_err(|c| err("invalid_template", format!("{name}: {c}")))?;
+                let structure = register::extract(&tpl).map_err(|c| err("invalid_template", format!("{name}: {c}")))?;
+                let id = self.next_id("reg");
+                let dir = self.dir("work")?.join(&id);
+                oh_host::ensure_dir(&dir).map_err(|c| err(c, dir.display().to_string()))?;
+                let _ = oh_host::publish_no_clobber(&dir.join("structure.json"), &serde_json::to_vec_pretty(&structure).unwrap_or_default());
+                let sha = hex_sha256(&tpl);
+                let source = Path::new(name).file_name().map(|f| f.to_string_lossy().to_string()).unwrap_or_else(|| name.to_string());
+                self.state.registrations.insert(id.clone(), Registration { source, template: tpl, dir: dir.clone(), attempts: 0, last: None });
+                Ok(json!({
+                    "registration_id": id, "template": name, "sha256": sha, "cleanup": cleanup, "work_dir": dir,
+                    "structure": structure, "card_format": register_guide(), "save_to": personal,
+                    "next_step": "structure로 카드 초안(TOML)과 sample(원본 값)을 만들어 oh_library_register(registration_id, card, sample, expect)로 검증받는다. 저장은 아직 하지 않는다",
+                }))
+            }
+            (false, true) => {
+                let rid = req_str(a, "registration_id", 100)?.to_string();
+                let card = req_str(a, "card", 60_000)?;
+                let sample = match a.get("sample") {
+                    Some(v @ Value::Object(_)) => v,
+                    _ => return Err(err("invalid_arguments", "sample: {슬롯id: {value, source}} 객체(원본에 있는 값)")),
+                };
+                let expect = match a.get("expect") {
+                    None => None,
+                    Some(Value::Object(m)) if m.len() <= 100 => Some(m),
+                    Some(_) => return Err(err("invalid_arguments", "expect: {계산id: \"원본에 적힌 값\"} 100개 이하")),
+                };
+                let l = self.loaded()?;
+                let reg = self.state.registrations.get(&rid).ok_or_else(|| err("unknown_registration", rid.clone()))?;
+                let (mut report, v) = register::validate(reg, &l.stack, &l.engine, &register::Input { card_toml: card, sample, expect });
+                let n = reg.attempts + 1;
+                let dir = reg.dir.clone();
+                let _ = oh_host::replace_file(&dir.join(format!("card-{n}.toml")), v.card_toml.as_bytes());
+                let _ = oh_host::replace_file(&dir.join(format!("check-{n}.json")), &serde_json::to_vec_pretty(&report).unwrap_or_default());
+                report["registration_id"] = json!(rid);
+                report["attempt"] = json!(n);
+                report["save_to"] = json!(personal);
+                let reg = self.state.registrations.get_mut(&rid).expect("checked");
+                reg.attempts = n;
+                reg.last = Some(v);
+                Ok(report)
+            }
+            _ => Err(err("invalid_arguments", "template(첫 호출) 또는 registration_id+card+sample(검증) 중 하나")),
+        }
+    }
+    /// D10 step 5: save the last validated card to the personal library (user confirmed).
+    fn commit(&mut self, a: &Map<String, Value>) -> Result<Value, ToolErr> {
+        only(a, &["registration_id", "user_confirmed", "accept_differences", "replace"])?;
+        let rid = req_str(a, "registration_id", 100)?.to_string();
+        let flag = |k: &str| -> Result<bool, ToolErr> {
+            match a.get(k) {
+                None => Ok(false),
+                Some(Value::Bool(b)) => Ok(*b),
+                Some(_) => Err(err("invalid_arguments", format!("{k}: true/false"))),
+            }
+        };
+        let (confirmed, accept, replace) = (flag("user_confirmed")?, flag("accept_differences")?, flag("replace")?);
+        let reg = self.state.registrations.get(&rid).ok_or_else(|| err("unknown_registration", rid.clone()))?;
+        let v = reg.last.as_ref().ok_or_else(|| err("not_validated", rid.clone()))?;
+        if !confirmed {
+            return Err(err("user_confirmation_required", ""));
+        }
+        match v.status {
+            "ready" => {}
+            "needs_user_decision" if accept => {}
+            "needs_user_decision" => return Err(ToolErr { code: "decision_required".into(), detail: None, extra: Some(json!(v.decisions)) }),
+            _ => return Err(err("registration_not_ready", v.card_id.clone())),
+        }
+        if let Some(layer) = &v.existing_layer {
+            if !replace {
+                return Err(err("card_exists", format!("{} ({layer})", v.card_id)));
+            }
+        }
+        let stamp = now_stamp();
+        // commit checks the id again against the disk (another registration may have saved it since)
+        let mut out = register::commit(&self.install_root(), &self.cfg.library, v, &reg.template, replace, &stamp).map_err(|(c, d)| err(&c, d))?;
+        let card_id = v.card_id.clone();
+        let accepted = (v.status == "needs_user_decision").then(|| v.decisions.clone());
+        let replaced = out.get("backup").and_then(Value::as_array).filter(|b| !b.is_empty()).map(|_| json!("personal")).or_else(|| v.existing_layer.clone().map(Value::from));
+        let dir = reg.dir.clone();
+        // the running server picks the new card up at once; other server processes on restart
+        self.state.loaded = State::load(&self.cfg).loaded;
+        let layer = self.loaded()?.stack.card_layer(&card_id).map(String::from);
+        if layer.as_deref() != Some("personal") {
+            return Err(err("commit_verification_failed", format!("reload: {card_id} {layer:?}")));
+        }
+        out["replaced_layer"] = replaced.unwrap_or(Value::Null);
+        if let Some(d) = accepted {
+            out["accepted_differences"] = json!(d);
+        }
+        out["next_step"] = json!("이 카드로 바로 문서를 만들 수 있다(oh_card_get → oh_case_open → oh_plan_check → oh_draft → oh_finalize). 다른 클라이언트에서 쓰려면 그 클라이언트를 다시 시작한다");
+        let _ = oh_host::replace_file(&dir.join("commit.json"), &serde_json::to_vec_pretty(&out).unwrap_or_default());
+        self.state.registrations.remove(&rid);
+        Ok(out)
+    }
+}
+
+fn register_guide() -> String {
+    format!(
+        "카드 초안 = TOML 문자열(LIBRARY-GUIDE 3절·필드 참고와 같은 형식). template·template_sha256은 쓰지 않는다(코어가 사용자 파일로 넣는다). \
+필수: id(영문 소문자·숫자·-), title, version, triggers. 머리 표가 품의서면 extends = \"approval-memo\"(공문이면 \"official-letter\")로 상속하고 본문만 선언한다. 상속하면 틀의 슬롯(작성일·부서·작성자·사업명·사업코드·제목 등)도 카드 슬롯이다. \
+[[slot]]: id, label, kind(text·person·prose·money·decimal·date·email·phone·list), required, require_source(첨부·사용자 값), prose는 guide + max_chars 필수. \
+위치: 라벨 줄은 [[target]] id·fmt·anchor = [{{ starts = \"라벨 : \" }}](label_lines의 unique=true만), 라벨 칸 옆 칸은 [[cell]] id·label·fmt(label_cells의 unique=true만), 그 밖의 칸은 [[cell]] id·table·row·col·fmt, 반복 행은 [[rows]]. 모든 target·cell에 fmt가 있어야 한다. \
+fmt는 \"글자 {{슬롯id|필터}} 글자\", [ … ]는 안의 값이 없으면 통째로 빠진다. 필터: {filters}. 천 단위 쉼표는 usd(정수)·usd2(소수 둘째)·krw, 날짜는 date_kr(2026년 1월 2일)·date_dot(2026.01.02). \
+합계·분담·환산·비율처럼 원본에서 계산된 숫자는 슬롯이 아니라 [[calc]] id·label·expr로 둔다(LLM이 값을 넣지 않는다). 계산 함수: {funcs}. 이 밖의 함수는 쓰지 않는다(unknown_function). \
+sample = 원본에 적힌 값 그대로의 plan 슬롯({{\"슬롯id\": {{\"value\": \"…\", \"source\": \"원본 <위치>\"}}}}), 틀의 필수 슬롯 포함, 계산 슬롯은 넣지 않는다. expect = {{\"계산id\": \"원본에 적힌 값\"}}. \
+코어는 앵커 유일성, 계산식 검산(expect), 왕복 시험(원본 값으로 다시 만든 문서 = 원본)을 확인한다. 저장은 사용자 확인 뒤 oh_library_commit. \
+최소 예: id = \"my-memo\"\\ntitle = \"내 품의\"\\nversion = \"1.0.0\"\\nextends = \"approval-memo\"\\ntriggers = [\"내 품의\"]\\n\\n[[slot]]\\nid = \"fee\"\\nlabel = \"수수료(USD)\"\\nkind = \"money\"\\nrequired = true\\nrequire_source = true\\n\\n[[calc]]\\nid = \"total\"\\nlabel = \"합계\"\\nexpr = \"sum(fee, tax)\"\\n\\n[[cell]]\\nid = \"fee_cell\"\\ntable = 1\\nrow = 3\\ncol = 2\\nfmt = \"USD {{fee|usd}}\"",
+        filters = oh_recipe::FILTERS.join(", "),
+        funcs = register::GENERAL_FUNCS
+    )
 }
 
 fn write_draft_files(case_dir: &Path, draft_id: &str, d: &Draft) -> Result<Vec<String>, ToolErr> {
@@ -769,9 +941,17 @@ pub fn tool_defs() -> Value {
         {"name": "oh_finalize", "description": "코어 영수증이 있는 draft를 outbox에 저장한다(덮어쓰지 않음). 문서가 여럿이면 document 번호가 필요하다.", "inputSchema": s(json!({"draft_id": {"type": "string"}, "output_name": {"type": "string"}, "document": {"type": "integer", "minimum": 0}}), json!(["draft_id", "output_name"]))},
         {"name": "oh_project_get", "description": "사업 기록(작업 폴더 projects/)을 본다. project 없이 부르면 목록. 같은 사업의 두 번째 서류부터 사업명·코드·부서·지분 등을 다시 묻지 않게 한다.", "inputSchema": s(json!({"project": {"type": "string"}}), json!([]))},
         {"name": "oh_project_save", "description": "확인된 사업 정보를 출처와 함께 사업 기록에 저장한다(사업정보 문서·계약서 등에서 읽은 값). 문서를 확정하면 코어가 자동 저장하므로 문서 없이 기록만 할 때 쓴다.", "inputSchema": s(json!({"project": {"type": "string"}, "facts": {"type": "object", "description": format!("{{\"키\": {{\"value\": \"값\", \"source\": \"파일명+위치 또는 user\"}}}}. 키: {FACT_KEYS:?} 또는 x_로 시작")}}), json!(["project", "facts"]))},
-        {"name": "oh_library_register", "description": "라이브러리 등록 제안(미구현).", "inputSchema": {"type": "object", "additionalProperties": true}},
-        {"name": "oh_library_commit", "description": "등록 제안 반영(미구현, 사용자 확인 후에만).", "inputSchema": {"type": "object", "additionalProperties": true}},
-        {"name": "oh_calibrate", "description": "LLM 보정 과제(미구현).", "inputSchema": {"type": "object", "additionalProperties": true}}
+        {"name": "oh_library_register", "description": "사용자 양식(값이 들어간 HWPX)을 개인 카드로 등록하는 1·2단계. ① template만 주면 코어가 구조(라벨·표·숫자·합계 행)를 돌려준다. ② registration_id + card(카드 초안 TOML) + sample(원본 값) [+ expect(계산 검산값)]을 주면 코어가 앵커·계산·왕복 시험으로 검증한다. 저장하지 않는다.", "inputSchema": s(json!({
+            "template": {"type": "string", "description": "inbox 안의 HWPX 이름이나 절대 경로(첫 호출)"},
+            "registration_id": {"type": "string"},
+            "card": {"type": "string", "description": "카드 초안 TOML(template 필드 없이)"},
+            "sample": {"type": "object", "description": "{\"슬롯id\": {\"value\": \"원본 값\", \"source\": \"원본 <위치>\"}}"},
+            "expect": {"type": "object", "description": "{\"계산id\": \"원본에 적힌 값\"}"}
+        }), json!([]))},
+        {"name": "oh_library_commit", "description": "검증된 등록 카드를 개인 라이브러리에 저장한다. 사용자가 요약·저장 위치를 확인한 뒤에만 user_confirmed=true로 부른다. 같은 id가 있으면 replace, 사용자 결정이 필요한 차이를 받아들였으면 accept_differences.", "inputSchema": s(json!({
+            "registration_id": {"type": "string"}, "user_confirmed": {"type": "boolean"},
+            "accept_differences": {"type": "boolean"}, "replace": {"type": "boolean"}
+        }), json!(["registration_id", "user_confirmed"]))}
     ])
 }
 

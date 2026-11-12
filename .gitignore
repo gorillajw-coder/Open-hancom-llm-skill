@@ -2,3 +2,4 @@ target/
 *.tmp
 .toolchain/
 __pycache__/
+dist/

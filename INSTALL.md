@@ -1,6 +1,14 @@
 # Open-hancom 설치
 
-배포물: `oh`(Windows는 `oh.exe`), `library/`, `PROMPT.md`, `INSTALL.md`. 관리자 권한은 필요 없다. 우회 플래그(`-ExecutionPolicy Bypass` 등)는 쓰지 않는다.
+배포물(zip 하나): `oh.exe`, `library/`, `PROMPT.md`, `INSTALL.md`, `docs/LIBRARY-GUIDE.md`, `LICENSE`, `NOTICE`, `THIRD-PARTY-NOTICES`, `VERSION.txt`(버전·커밋·`oh.exe` sha256·포함 카드). 관리자 권한은 필요 없다. 우회 플래그(`-ExecutionPolicy Bypass` 등)는 쓰지 않는다.
+
+## 서명 없는 실행 파일 (Windows 보안 경고)
+`oh.exe`는 코드 서명을 하지 않는다. 그래서 처음 실행할 때 Windows가 막을 수 있다.
+- 인터넷·메신저로 받은 zip은 **풀기 전에** zip 파일 속성 → 일반 → 아래쪽 "차단 해제"를 체크하고 확인을 누른다. 그러면 풀린 파일마다 경고가 뜨지 않는다.
+- "Windows의 PC 보호"(SmartScreen) 창이 뜨면 "추가 정보" → "실행"을 누른다.
+- Windows 11의 "스마트 앱 컨트롤"이 켜져 있으면 "실행" 버튼 없이 막힌다. 이 기능은 파일별 허용이 없고, Windows 버전에 따라 한 번 끄면 다시 켜기 어렵다. 혼자 끄지 말고 IT 담당자와 상의한다.
+- 회사 보안 프로그램(백신·실행 통제)이 막으면 우회하지 말고 IT 담당자에게 허용을 요청한다. 이때 `oh.exe`의 sha256 값을 알려 주면 그 파일만 허용할 수 있다. 값은 PowerShell `Get-FileHash .\oh.exe`로 구한다.
+- `VERSION.txt`의 sha256은 zip 안에 같이 들어 있어서, 파일이 풀리면서 깨지지 않았는지만 확인해 준다. 받은 zip이 배포자가 만든 것인지 확인하려면 배포자가 따로 알려 준 값(배포 공지 등)과 비교한다.
 
 ## 설치
 1. 배포 zip을 풀고, 사용할 LLM 클라이언트를 **트레이까지 완전히 종료**한다. 실행 중인 Claude Desktop은 종료하면서 설정 파일을 다시 써서 방금 넣은 등록을 지울 수 있다(회사컴 실측: 등록 2분 뒤 `mcpServers`가 사라짐). Windows에서 Claude Desktop(`claude.exe`)이 돌고 있으면 `oh install`·`oh uninstall`(claude-desktop)은 `client_running`으로 거절한다. 같은 이름의 Claude Code 실행 파일(`%USERPROFILE%\.local\bin\claude.exe`, `.claude` 아래)은 제외한다. 프로세스 목록(tasklist)을 못 읽으면 거절하지 않고 `warnings`에 `client_running_unknown`을 남긴다. `claude.exe`는 보이는데 경로를 확인하지 못하면(PowerShell 차단 등) 앱으로 보고 거절한다. `--force-running`으로 강제할 수 있지만 경고가 남고 등록이 덮어써질 수 있다.

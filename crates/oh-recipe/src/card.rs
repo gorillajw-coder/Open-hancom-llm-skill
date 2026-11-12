@@ -52,6 +52,10 @@ pub struct Card {
     pub xlsx: Option<XlsxOut>,
     /// Regulation table id used by `grade`/`rate`/`discount` calc functions.
     pub regulation: Option<String>,
+    /// Generic fallback card (core 0.5.0): search lists it after every specific card, so a
+    /// request a specific card covers never lands on it first.
+    #[serde(default)]
+    pub fallback: bool,
     /// Set by `with_frames` (never read from TOML): the frame named by `extends` is merged in.
     #[serde(skip)]
     pub frame_merged: bool,

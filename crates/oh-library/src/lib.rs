@@ -190,12 +190,14 @@ impl Library {
     /// Minimal P3 interface: substring match on card id, title and triggers.
     pub fn search(&self, query: &str) -> Result<Vec<Hit>> {
         let q = query.trim();
-        Ok(self
+        let mut hits: Vec<(bool, Hit)> = self
             .cards()?
             .into_iter()
             .filter(|(c, _)| !q.is_empty() && (c.id.contains(q) || c.title.contains(q) || c.triggers.iter().any(|t| t.contains(q) || q.contains(t.as_str()))))
-            .map(|(c, _)| Hit { kind: "card", id: c.id, title: c.title })
-            .collect())
+            .map(|(c, _)| (c.fallback, Hit { kind: "card", id: c.id, title: c.title }))
+            .collect();
+        hits.sort_by_key(|(f, _)| *f); // fallback cards last (stable)
+        Ok(hits.into_iter().map(|(_, h)| h).collect())
     }
 }
 

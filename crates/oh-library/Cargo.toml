@@ -2,6 +2,7 @@
 name = "oh-library"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 description = "Library folder loading with manifest hash verification. File access goes through oh-host."
 
 [dependencies]

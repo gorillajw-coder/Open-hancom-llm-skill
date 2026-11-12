@@ -7,7 +7,12 @@ LLM 클라이언트(Claude Desktop·Claude Code·Codex 등)에게 **한글(HWPX)
 - **코어가 하는 일**: 문서 카드(슬롯·계산·룰·위치)에 따라 템플릿을 채우고, 결과와 영수증(무엇이 어디에 들어갔는지, 어떤 룰이 통과·실패했는지)을 남깁니다.
 - **연결 방식**: stdio MCP 서버(`oh mcp`)와 CLI(`oh`). 대상 OS는 Windows이고, Linux에서도 빌드·시험됩니다.
 
-> 상태: 1.0 이전(코어 0.4.0). 이 공개 저장소의 기본 라이브러리에는 **공문 틀(`official-letter`)과 예시 카드 하나**만 들어 있습니다. 회사 양식에서 만든 카드는 공개하지 않습니다. 자기 양식은 개인 라이브러리나 공용 팩으로 추가합니다(`docs/LIBRARY-GUIDE.md`).
+> 상태: **1.0.0** (2026-11-12). 이 공개 저장소의 기본 라이브러리에는 **공문 틀(`official-letter`)과 예시 카드 하나**만 들어 있습니다. 회사 양식에서 만든 카드는 공개하지 않습니다. 자기 양식은 등록 흐름(`oh_library_register` → 확인 → `oh_library_commit`)으로 개인 라이브러리에 넣거나 공용 팩으로 연결합니다(`docs/LIBRARY-GUIDE.md`). 변경 기록은 `CHANGELOG.md`.
+
+## 받기 (Windows)
+[Releases](../../releases)에서 `open-hancom-<버전>-windows-x64-public.zip`을 받습니다. 실행 파일은 코드 서명이 없습니다(첫 실행 때 Windows 경고가 뜰 수 있음, `INSTALL.md` 참조). zip의 `VERSION.txt`에 `oh.exe` sha256이 있습니다.
+- **Claude에게 맡기기**: Claude Desktop의 Code 탭(또는 Claude Code)에 zip을 주고 "zip 안의 CLAUDE-SETUP.md 대로 설치해 줘"라고 합니다.
+- **직접**: zip 차단 해제 → 압축 풀기 → `install-claude.cmd` 실행 → Claude를 트레이까지 종료했다가 다시 켭니다.
 
 ## 빌드
 ```

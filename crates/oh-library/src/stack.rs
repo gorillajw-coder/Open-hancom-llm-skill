@@ -187,6 +187,11 @@ pub struct StackHit {
     pub id: String,
     pub title: String,
     pub layer: String,
+    /// Generic fallback card: callers list it after specific cards.
+    pub fallback: bool,
+    /// The card's id or one of its triggers appears whole in the query (not just a shared word
+    /// of its title, or a short query word inside a longer trigger).
+    pub strong: bool,
 }
 
 pub struct Stack {
@@ -381,11 +386,16 @@ impl Stack {
     /// Substring match on id, title and triggers of the cards in use.
     pub fn search(&self, query: &str) -> Result<Vec<StackHit>> {
         let q = query.trim();
-        Ok(self
+        let mut hits: Vec<StackHit> = self
             .cards()?
             .into_iter()
             .filter(|(c, _)| !q.is_empty() && (c.id.contains(q) || c.title.contains(q) || c.triggers.iter().any(|t| t.contains(q) || q.contains(t.as_str()))))
-            .map(|(c, l)| StackHit { id: c.id, title: c.title, layer: l })
-            .collect())
+            .map(|(c, l)| {
+                let strong = q.contains(c.id.as_str()) || c.triggers.iter().any(|t| q.contains(t.as_str()));
+                StackHit { id: c.id, title: c.title, layer: l, fallback: c.fallback, strong }
+            })
+            .collect();
+        hits.sort_by_key(|h| h.fallback); // fallback cards last (stable)
+        Ok(hits)
     }
 }

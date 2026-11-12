@@ -407,7 +407,7 @@ dependencies = [
 
 [[package]]
 name = "oh-cli"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "oh-document",
  "oh-host",
@@ -422,7 +422,7 @@ dependencies = [
 
 [[package]]
 name = "oh-document"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "png",
  "roxmltree",
@@ -437,11 +437,11 @@ dependencies = [
 
 [[package]]
 name = "oh-host"
-version = "0.4.0"
+version = "1.0.0"
 
 [[package]]
 name = "oh-library"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "oh-host",
  "oh-recipe",
@@ -452,7 +452,7 @@ dependencies = [
 
 [[package]]
 name = "oh-mcp"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "oh-document",
  "oh-host",
@@ -461,12 +461,13 @@ dependencies = [
  "roxmltree",
  "serde",
  "serde_json",
+ "toml",
  "zip",
 ]
 
 [[package]]
 name = "oh-recipe"
-version = "0.4.0"
+version = "1.0.0"
 dependencies = [
  "oh-document",
  "roxmltree",

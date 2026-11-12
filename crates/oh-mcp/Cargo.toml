@@ -2,6 +2,7 @@
 name = "oh-mcp"
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 description = "stdio MCP server (hand-written JSON-RPC, no async runtime) exposing only the high-level document tools."
 
 [dependencies]
@@ -12,4 +13,5 @@ oh-recipe = { path = "../oh-recipe" }
 serde_json = { version = "1", features = ["raw_value"] }
 serde = { version = "1", features = ["derive"] }
 roxmltree = "0.20"
+toml = { version = "0.8", default-features = false, features = ["parse"] }
 zip = { version = "2.4", default-features = false, features = ["deflate"] }
