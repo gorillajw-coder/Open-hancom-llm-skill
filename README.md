@@ -7,7 +7,7 @@ LLM 클라이언트(Claude Desktop·Claude Code·Codex 등)에게 **한글(HWPX)
 - **코어가 하는 일**: 문서 카드(슬롯·계산·룰·위치)에 따라 템플릿을 채우고, 결과와 영수증(무엇이 어디에 들어갔는지, 어떤 룰이 통과·실패했는지)을 남깁니다.
 - **연결 방식**: stdio MCP 서버(`oh mcp`)와 CLI(`oh`). 대상 OS는 Windows이고, Linux에서도 빌드·시험됩니다.
 
-> 상태: **1.0.0** (2026-11-12). 이 공개 저장소의 기본 라이브러리에는 **공문 틀(`official-letter`)과 예시 카드 하나**만 들어 있습니다. 회사 양식에서 만든 카드는 공개하지 않습니다. 자기 양식은 등록 흐름(`oh_library_register` → 확인 → `oh_library_commit`)으로 개인 라이브러리에 넣거나 공용 팩으로 연결합니다(`docs/LIBRARY-GUIDE.md`). 변경 기록은 `CHANGELOG.md`.
+> 상태: **1.1.0** (2026-11-13). 이 공개 저장소의 기본 라이브러리에는 **공문 틀(`official-letter`)과 예시 카드 하나**만 들어 있습니다. 회사 양식에서 만든 카드는 공개하지 않습니다. 자기 양식은 등록 흐름(`oh_library_register` → 확인 → `oh_library_commit`)으로 개인 라이브러리에 넣거나 공용 팩으로 연결합니다(`docs/LIBRARY-GUIDE.md`). 변경 기록은 `CHANGELOG.md`.
 
 ## 받기 (Windows)
 [Releases](../../releases)에서 `open-hancom-<버전>-windows-x64-public.zip`을 받습니다. 실행 파일은 코드 서명이 없습니다(첫 실행 때 Windows 경고가 뜰 수 있음, `INSTALL.md` 참조). zip의 `VERSION.txt`에 `oh.exe` sha256이 있습니다.
@@ -34,6 +34,7 @@ oh doctor
 - 라이브러리는 데이터입니다: 카드(`cards/*.toml`), 공통 틀(`frames/`), 템플릿(`templates/*.hwpx`), 규정(`regulations/`), 예시. `manifest.toml`에 모든 파일의 sha256을 적고, 로딩할 때 검사합니다.
 - 층: **개인 라이브러리 > 연결한 공용 팩(폴더·zip) > 기본 라이브러리**. `oh library add/list/remove`로 연결합니다.
 - 카드 작성법은 `docs/LIBRARY-GUIDE.md`에 있습니다.
+- 팩 만들기(1.1.0): `oh library anonymize`(치환표로 HWPX 익명화), `oh library scan`(검사어·연락처·미리보기 잔존 검사), `oh library manifest`(해시 manifest 작성), `oh library check`(연결 전 검사). Python이 필요 없습니다. 치환표와 검사어 파일은 팩 밖에 둡니다.
 
 ## 구성
 | 크레이트 | 역할 |

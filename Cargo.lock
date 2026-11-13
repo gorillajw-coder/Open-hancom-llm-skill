@@ -407,7 +407,7 @@ dependencies = [
 
 [[package]]
 name = "oh-cli"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "oh-document",
  "oh-host",
@@ -422,7 +422,7 @@ dependencies = [
 
 [[package]]
 name = "oh-document"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "png",
  "roxmltree",
@@ -437,12 +437,13 @@ dependencies = [
 
 [[package]]
 name = "oh-host"
-version = "1.0.0"
+version = "1.1.0"
 
 [[package]]
 name = "oh-library"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
+ "flate2",
  "oh-host",
  "oh-recipe",
  "serde",
@@ -452,7 +453,7 @@ dependencies = [
 
 [[package]]
 name = "oh-mcp"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "oh-document",
  "oh-host",
@@ -467,7 +468,7 @@ dependencies = [
 
 [[package]]
 name = "oh-recipe"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "oh-document",
  "roxmltree",

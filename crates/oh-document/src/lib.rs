@@ -1,5 +1,7 @@
 //! Local-only, preservation-first HWPX package engine. No layout guarantee.
 mod zip_preserve;
+mod anonymize;
+pub use anonymize::{AUTHOR_PLACEHOLDER, BLANK_PREVIEW_PNG};
 mod styles;
 pub use styles::FormatSpec;
 mod paragraph;

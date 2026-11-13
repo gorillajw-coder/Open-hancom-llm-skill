@@ -46,6 +46,14 @@ oh install --client chatgpt-desktop --config <설정 파일 경로>
 - 목록·상태·충돌: `oh library list`
 - 해제: `oh library remove --name <이름>` (팩 파일은 지우지 않는다)
 - 연결은 `<설치 폴더>\sockets.toml`에 기록된다. 연결·해제 뒤 클라이언트를 다시 켠다. 자세한 규칙은 `docs/LIBRARY-GUIDE.md` 2절.
+- 연결 전 점검(기록 안 함): `oh library check --path "<팩>" [--terms <검사어.txt>]`
+
+## 팩 만들기 (나눠 줄 사람)
+Python 없이 `oh`만으로 한다. 검사어 파일(한 줄에 하나, 회사·사람·사업 고유명)과 치환표는 팩에 넣지 않는다.
+- 익명화: `oh library anonymize --path <원본.hwpx> --map <치환표.toml> --output <결과.hwpx> [--terms <검사어.txt>]` (원본은 그대로, 결과 파일은 새로 만든다)
+- 잔존 스캔: `oh library scan --path <파일·폴더·zip> --terms <검사어.txt>` (검사어는 줄 번호로만 보고)
+- manifest: `oh library manifest --path <팩 폴더> [--version <판>] [--name <이름>] --terms <검사어.txt>` (스캔 0일 때만 `anonymized = true`)
+- 자세한 절차는 `docs/LIBRARY-GUIDE.md` 4절.
 
 ## 제거
 `oh uninstall --client <이름>`은 설정 항목만 지운다(백업 생성, 다른 항목 보존). 설치 파일까지 지우려면 `--remove-files`(개인 라이브러리 `personal-library`와 `sockets.toml`은 남긴다). 작업 폴더(`문서\OpenHancom`)는 지우지 않는다.

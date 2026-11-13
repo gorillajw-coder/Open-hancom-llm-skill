@@ -7,7 +7,23 @@
 - 1.x 안에서는 카드·틀 TOML 형식, MCP 도구 이름·인수, 설치 폴더 구조(`library/`, `personal-library/`, `sockets.toml`)를 깨지 않는다. 깨야 하면 2.0으로 올린다.
 - 재설치·업데이트는 `personal-library/`, `sockets.toml`, 작업 폴더(`문서\OpenHancom`)를 건드리지 않는다.
 
-## 1.0.0 (준비 중)
+## 1.1.0 (2026-11-13)
+팩 만들기 도구를 `oh`에 넣었다. 공용 팩이나 기본 라이브러리에 새 양식을 넣을 때 Python 스크립트 없이 Windows에서 바로 한다.
+
+추가
+- `oh library anonymize`: 치환표로 HWPX를 익명화한다. 작성자 정보, 미리보기 이미지, 줄 배치 캐시까지 정리하고, 원본은 바꾸지 않는다(`scripts/anon-dept.py` 대체).
+- `oh library scan`: 검사어·이메일·전화·주민번호·미리보기 이미지 잔존 스캔. 파일, 폴더, zip, HWPX·XLSX 멤버까지 본다. 검사어는 줄 번호로만 보고한다(`scripts/anon-scan.py` 대체, `dist-scan.py` 규칙).
+- `oh library manifest`: 팩 manifest를 해시와 함께 다시 쓴다. 스캔이 0일 때만 `anonymized = true`(`scripts/library-manifest.py` 대체, 기본 라이브러리에서 같은 바이트).
+- `oh library check`: 연결하기 전에 `add`와 같은 검사를 한다. 기록은 하지 않는다.
+
+바뀜
+- `oh library add|list|remove`가 쓰지 않는 옵션을 주면 거부한다(`invalid_arguments`).
+- 라이브러리·카드 형식, MCP 도구, 설치 폴더 구조는 1.0.0과 같다. 1.0.0 위에 그대로 덮어 설치하면 된다.
+
+알려진 한계
+- 익명화는 한 글자 덩어리(run) 안의 문자열만 바꾼다. 여러 조각으로 나뉜 원문과 내장 이미지는 결과를 `oh library scan`으로 다시 보고 손으로 확인한다.
+
+## 1.0.0 (2026-11-12)
 처음으로 동료 공유와 GitHub 공개를 하는 버전이다(D14).
 
 추가

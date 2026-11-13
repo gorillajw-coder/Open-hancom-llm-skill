@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 mod stack;
+pub mod authoring;
 pub use stack::{open_pack, read_sockets, valid_pack_name, write_sockets, ZipSource, Conflict, LayerInfo, PackEntry, Stack, StackHit, PERSONAL_DIR, SOCKETS_FILE};
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -67,7 +67,7 @@
 4. **계산 정하기.** 합계·환산·비율·일수처럼 계산으로 나오는 값은 LLM이 넣지 않는다. 카드의 `[[calc]]`로 코어가 계산한다 (D4). 원문 값이 따로 있으면 `compare_to`로 대조만 한다.
 5. **위치(target) 쓰기.** 슬롯을 문서의 어느 글자에 어떤 형식으로 넣을지 적는다. 형식은 `fmt`에 `{슬롯|필터}`로 쓴다. 대괄호 `[...]`로 감싼 부분은 그 안의 슬롯이 하나라도 비어 있으면 통째로 빠진다(한 겹만 가능).
 6. **규칙 쓰기.** `[[rule]]`에 조건(`when`), 확인(`assert` 또는 `require`), 심각도(`block`/`warn`), 메시지, 근거(`cite`)를 적는다. `block`이면 최종 저장을 막는다.
-7. **manifest 갱신.** 새 파일을 `[[file]]`로 넣고 sha256을 적는다. 카드의 `template_sha256`도 양식 해시와 맞춘다.
+7. **manifest 갱신.** `oh library manifest --path <팩 폴더> --version <판> [--name <이름>] [--terms <검사어.txt>]`가 폴더(`frames`·`cards`·`templates`·`examples`·`regulations`, `defaults.toml`)의 파일을 해시와 함께 다시 쓴다. 폴더에 맞지 않는 파일(확장자가 다르거나 숨김 파일)은 `not_listed`로만 알린다. 카드의 `template_sha256`은 양식 해시와 직접 맞춘다.
 8. **시험.** 아래 7절 체크리스트를 통과시킨다.
 
 ### 최소 카드 예
@@ -124,6 +124,28 @@ anchor = [{ after = "제목", n = 1 }]
 - HWPX 안의 `Preview/PrvText.txt`, `Preview/PrvImage.png`, 작성자 메타, 내장 이미지에도 원문이 남는다. 이것들도 정리한 뒤 잔존 스캔을 한다. 스캔은 고유명, 금액 원문, 계좌 패턴을 모든 ZIP 멤버에서 찾는다.
 - manifest에 `anonymized = true`는 스캔 결과가 0일 때만 적는다.
 
+### 도구 (1.1.0, Python 불필요)
+검사어 파일과 치환표는 사용자 파일이다. 팩·배포본·저장소에 넣지 않는다.
+- **검사어 파일**: UTF-8, 한 줄에 하나(회사·사람·사업·지명 등 원문 고유명). 빈 줄과 1글자는 무시한다.
+- **치환표**(UTF-8 TOML, 위에서부터 차례로 적용):
+  ```toml
+  [[replace]]
+  from = "원래 회사명"
+  to = "개좋소"
+  ```
+- `oh library anonymize --path <원본.hwpx> --map <치환표> --output <결과.hwpx> [--terms <검사어>]`
+  - 본문·머리(`Contents/*.xml`), 문서 정보(`content.hpf`), 미리보기 글자(`Preview/PrvText.txt`)의 글자 내용에서 바꾼다(태그·속성은 건드리지 않는다). 영문·숫자 항목은 대소문자를 가리지 않고 단어 단위로만 바꾼다("ABC"는 "abc"도 바꾸지만 "ABCD" 안의 ABC는 두지 않는다).
+  - 작성자·마지막 저장자는 `kim`으로, 미리보기 이미지는 빈 1x1 그림으로 바꾸고, 글자 길이가 바뀌어 낡은 줄 배치 캐시를 지운다.
+  - 원본은 바꾸지 않고, 결과 파일이 이미 있으면 `target_exists`로 멈춘다.
+  - 결과의 `remaining`에 원문이 남은 멤버가 나온다(내장 이미지 등은 바꾸지 않는다). 글자가 여러 조각(run)으로 나뉜 원문은 못 바꿀 수 있으니 `--terms`로 바로 다시 스캔한다. `images_to_check`의 그림은 손으로 본다.
+- `oh library scan --path <파일·폴더·zip> --terms <검사어>`
+  - 모든 파일과 ZIP 멤버(HWPX·XLSX·팩 zip, 3단까지)를 원래 바이트·UTF-8·UTF-16으로 읽어 검사어, example.com 밖의 이메일, 전화번호·주민번호 모양, 비어 있지 않은 미리보기 이미지를 찾는다. 파일·멤버 이름도 본다.
+  - 배포 스캔(`scripts/dist-scan.py`)과 같은 규칙: 영문 항목은 대소문자 무시·단어 단위, 숫자 항목은 더 긴 16진 숫자열 안이면 무시, `regulations/*.toml`의 `places = [` 줄은 검사어에서 뺀다.
+  - 결과에 검사어는 줄 번호로만 나온다. 걸린 것이 있거나 읽지 못한 멤버가 있으면 종료 코드 2.
+- `oh library manifest ... --terms <검사어>`: 목록의 모든 파일을 스캔해 0일 때만 `anonymized = true`로 쓴다. `--terms`가 없으면 `anonymized = false`(개인 라이브러리용). 쓴 뒤 해시를 다시 읽어 확인한다.
+- `oh library check --path <팩> [--terms <검사어>] [--name <이름>] [--root <설치 폴더>]`: `oh library add`가 하는 검사(해시, `anonymized`, 설치된 라이브러리와 묶어 카드·틀 확인, 다른 층이 빠지지 않는지)를 하고 `sockets.toml`에는 기록하지 않는다. `--terms`면 잔존 스캔도 한다.
+- 순서: 원본 HWPX → `anonymize`(필요하면 치환표를 고쳐 반복) → 카드 작성 → `manifest --terms` → `check --terms` → 팩 폴더나 zip을 나눠 준다. 받는 사람은 `oh library add`.
+
 ## 5. 등록 흐름 **[현재, 코어 0.5.0]** (D10, D14)
 값이 들어간 내 양식(HWPX) 하나를 개인 카드로 만든다. LLM(Claude 등)이 MCP 도구로 진행하고, 사용자는 확인만 한다. 카드는 개인 라이브러리(`<설치 폴더>/personal-library/`)에만 저장되고 익명화하지 않는다(D12). 공용 팩으로 나눠 줄 카드는 4절대로 익명화해서 손으로 만든다.
 
@@ -172,7 +194,7 @@ anchor = [{ after = "제목", n = 1 }]
 - [ ] 계산 슬롯에 LLM 값이 들어가지 않는다. 원문과 다르면 경고가 난다.
 - [ ] `block` 룰을 일부러 어긴 입력에서 finalize가 거절된다.
 - [ ] 한컴(가능하면)에서 결과 파일이 열리고 쪽수가 맞다.
-- [ ] 공용 팩이면 익명화 잔존 스캔 0이고 manifest 해시가 맞다. 빈 설치 폴더에 `oh library add --root <폴더> --path <팩>`이 `loaded`로 통과하고, `conflicts`에 의도하지 않은 id 겹침이 없다.
+- [ ] 공용 팩이면 `oh library manifest --terms`가 `anonymized: true`, `oh library check --path <팩> --terms <검사어> --root <빈 설치 폴더>`가 `ok: true`이고, `conflicts`에 의도하지 않은 id 겹침이 없다.
 
 ## 필드 참고 (코어 버전에 따라 늘어난다)
 - **슬롯 kind** [현재]: text, person, prose, money, decimal, date, email, phone, list(객체 배열), file(inbox 파일 이름, 코어가 바이트를 읽음)

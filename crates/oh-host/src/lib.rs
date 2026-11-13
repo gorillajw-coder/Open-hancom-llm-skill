@@ -282,3 +282,17 @@ pub fn replace_file(target: &Path, bytes: &[u8]) -> Result<()> {
         Err(_) => Err("output_io_error"),
     }
 }
+
+/// Entries of a directory, sorted by name: (name, is_dir). Symlinks are reported as files and
+/// never followed into. Names that are not valid UTF-8 fail (`non_utf8_path`).
+pub fn list_dir(path: &Path) -> Result<Vec<(String, bool)>> {
+    let mut out = Vec::new();
+    for e in std::fs::read_dir(path).map_err(|e| read_error_code(e.raw_os_error(), cfg!(windows)))? {
+        let e = e.map_err(|_| "input_io_error")?;
+        let name = e.file_name().into_string().map_err(|_| "non_utf8_path")?;
+        let dir = e.file_type().map_err(|_| "input_io_error")?.is_dir();
+        out.push((name, dir));
+    }
+    out.sort();
+    Ok(out)
+}

@@ -96,9 +96,37 @@ fn admin(cmd: &str, rest: &[String]) -> Value {
             std::process::exit(code)
         }
         "library" => {
-            let Some(sub) = rest.first() else { admin_error("invalid_arguments", "oh library list|add|remove") };
-            let f = args::parse(&rest[1..], &["root", "path", "name"], &[]).unwrap_or_else(|d| admin_error("invalid_arguments", &d));
+            let Some(sub) = rest.first() else { admin_error("invalid_arguments", "oh library list|add|remove|check|scan|anonymize|manifest") };
+            let f = args::parse(&rest[1..], &["root", "path", "name", "terms", "map", "output", "version"], &[]).unwrap_or_else(|d| admin_error("invalid_arguments", &d));
             let root = path_flag(&f, "root").unwrap_or_else(|| std::env::current_exe().ok().and_then(|e| e.parent().map(std::path::Path::to_path_buf)).unwrap_or_default());
+            let only = |allowed: &[&str]| if let Some(k) = f.keys().find(|k| !allowed.contains(&k.as_str())) { admin_error("invalid_arguments", &format!("oh library {sub}에는 --{k}를 쓰지 않는다")) };
+            let need = |k: &str| path_flag(&f, k).unwrap_or_else(|| admin_error("invalid_arguments", &format!("--{k} 필요")));
+            // authoring commands print a report and exit 2 when it is not clean
+            let report = |r: std::result::Result<(Value, bool), library::Fail>| -> ! {
+                let (v, ok) = r.unwrap_or_else(|(c, d)| admin_error(c, &d));
+                println!("{v}");
+                std::process::exit(if ok { 0 } else { 2 })
+            };
+            match sub.as_str() {
+                "scan" => {
+                    only(&["path", "terms"]);
+                    report(library::scan(&need("path"), &need("terms")))
+                }
+                "anonymize" => {
+                    only(&["path", "map", "output", "terms"]);
+                    report(library::anonymize(&need("path"), &need("map"), &need("output"), path_flag(&f, "terms").as_deref()))
+                }
+                "manifest" => {
+                    only(&["path", "version", "name", "terms"]);
+                    report(library::manifest(&need("path"), f.get("version").map(String::as_str), f.get("name").map(String::as_str), path_flag(&f, "terms").as_deref()))
+                }
+                "check" => {
+                    only(&["path", "name", "terms", "root"]);
+                    report(library::check(&root, &need("path"), f.get("name").map(String::as_str), path_flag(&f, "terms").as_deref()))
+                }
+                _ => {}
+            }
+            only(&["root", "path", "name"]);
             let r = match sub.as_str() {
                 "list" if !f.contains_key("path") && !f.contains_key("name") => library::list(&root),
                 "add" => match path_flag(&f, "path") {
@@ -109,7 +137,7 @@ fn admin(cmd: &str, rest: &[String]) -> Value {
                     Some(n) => library::remove(&root, n),
                     None => admin_error("invalid_arguments", "--name <팩 이름> 필요"),
                 },
-                _ => admin_error("invalid_arguments", "oh library list [--root R] | add --path P [--name N] [--root R] | remove --name N [--root R]"),
+                _ => admin_error("invalid_arguments", "oh library list [--root R] | add --path P [--name N] [--root R] | remove --name N [--root R] | check --path P [--terms T] [--name N] [--root R] | scan --path P --terms T | anonymize --path IN --map M --output OUT [--terms T] | manifest --path DIR [--version V] [--name N] [--terms T]"),
             };
             r.unwrap_or_else(|(c, d)| admin_error(c, &d))
         }
