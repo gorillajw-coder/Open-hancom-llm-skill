@@ -14,6 +14,18 @@ LLM 클라이언트(Claude Desktop·Claude Code·Codex 등)에게 **한글(HWPX)
 - **Claude에게 맡기기**: Claude Desktop의 Code 탭(또는 Claude Code)에 zip을 주고 "zip 안의 CLAUDE-SETUP.md 대로 설치해 줘"라고 합니다.
 - **직접**: zip 차단 해제 → 압축 풀기 → `install-claude.cmd` 실행 → Claude를 트레이까지 종료했다가 다시 켭니다.
 
+### ChatGPT · Codex · Claude
+
+코어는 하나이며 클라이언트별 설치·안내는 [`clients/`](clients/README.md)에서 관리합니다.
+
+| 사용 환경 | 안내 |
+|---|---|
+| Claude Desktop·Claude Code | [Claude 설치](clients/claude/README.md) |
+| ChatGPT Desktop | [ChatGPT 설치](clients/chatgpt/README.md) · [설명서 Español](clients/chatgpt/GUIA_ES.md) |
+| Codex 앱·CLI·IDE | [Codex 설치](clients/codex/README.md) |
+
+현재 v1.1.0의 기존 공개 ZIP에는 새 `clients/` 폴더가 없습니다. 해당 ZIP을 푼 폴더에 이 저장소의 `clients/`를 함께 두거나, 배포 담당자가 [`make-client-kits.py`](scripts/make-client-kits.py)로 클라이언트별 ZIP을 만들면 됩니다. 기존 릴리스·코어 버전은 그대로입니다. 공개용 기본 라이브러리는 공문 예시 하나이며, 문서는 한국어로 작성합니다.
+
 ## 빌드
 ```
 cargo build --release

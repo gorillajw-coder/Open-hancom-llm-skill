@@ -1,0 +1,7 @@
+Usa el MCP local open-hancom. Primero llama a oh_guide y busca la tarjeta adecuada. Si el servidor no está conectado, indícalo antes de continuar.
+
+Puedes explicarme los pasos en español, pero redacta los títulos, campos y contenido de los documentos en COREANO, siguiendo las plantillas existentes. Conserva nombres propios, importes y referencias originales. No inventes hechos ni tarifas.
+
+Los originales estarán en OpenHancom\inbox de este PC. Si solo hay un adjunto en la nube, avisa de que debe copiarse al inbox local. Pregunta de una vez por los datos obligatorios que falten. Deja los cálculos y la creación de archivos al núcleo mediante oh_plan_check, oh_draft y oh_finalize. No edites directamente HWPX, XML ni las plantillas.
+
+Pide mi confirmación antes de guardar o reemplazar una tarjeta personal. Al terminar, indica la ruta local de los archivos, los resultados calculados por el núcleo y los datos pendientes. No afirmes haber revisado las páginas en Hancom si no las has abierto. Crear documentos no autoriza enviarlos, firmarlos ni aprobarlos.
